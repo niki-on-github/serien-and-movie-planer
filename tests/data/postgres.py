@@ -37,7 +37,9 @@ create_movie_table_query = '''CREATE TABLE IF NOT EXISTS MOVIES
     (ID INT PRIMARY KEY     NOT NULL,
     TITLE           TEXT    NOT NULL,
     LONG_TITLE      TEXT    NOT NULL,
-    DATE            DATE    NOT NULL); '''
+    DATE            DATE    NOT NULL,
+    STATE           TEXT    NOT NULL
+    ); '''
 
 cursor.execute(create_movie_table_query)
 connection.commit()
@@ -47,7 +49,9 @@ create_serien_table_query = '''CREATE TABLE IF NOT EXISTS SERIEN
     TITLE           TEXT    NOT NULL,
     SEASON          INT     NOT NULL,
     DATE            DATE    NOT NULL,
-    SENDER          TEXT    NOT NULL); '''
+    SENDER          TEXT    NOT NULL,
+    STATE           TEXT    NOT NULL
+    ); '''
 
 cursor.execute(create_serien_table_query)
 connection.commit()
@@ -57,8 +61,8 @@ for k in DATA["movies"]:
     item['title'] = item['title'].replace("'",'')
     item['longTitle'] = item['longTitle'].replace("'",'')
     sql = f'''INSERT INTO MOVIES
-        (ID,TITLE,LONG_TITLE,DATE)
-        VALUES({k.split('/')[0]},'{item['title']}','{item['longTitle']}','{item['date']}')
+        (ID,TITLE,LONG_TITLE,DATE,STATE)
+        VALUES({k.split('/')[0]},'{item['title']}','{item['longTitle']}','{item['date']}', 'New')
         ON CONFLICT DO NOTHING'''
     logger.debug('sql: %s', sql)
     cursor.execute(sql)
@@ -69,8 +73,8 @@ for k in DATA["serien"]:
         title = k.replace("'",'')
         table_id = title + ' - Season ' + season
         sql = f'''INSERT INTO SERIEN
-            (ID,TITLE,SEASON,DATE,SENDER)
-            VALUES('{table_id}','{title}',{season},'{item['date']}','{item['sender']}')
+            (ID,TITLE,SEASON,DATE,SENDER,STATE)
+            VALUES('{table_id}','{title}',{season},'{item['date']}','{item['sender']}','New')
             ON CONFLICT DO NOTHING'''
         logger.debug('sql: %s', sql)
         cursor.execute(sql)
