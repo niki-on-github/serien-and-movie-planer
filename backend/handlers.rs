@@ -24,8 +24,6 @@ pub fn index() -> Files {
 
 #[put("/v1/movies/update")]
 async fn put_movies(body: web::Form<Response>) -> impl Responder {
-    println!("{}:{}", body.key, body.values);
-
     let values_json: serde_json::Value = serde_json::from_str(body.values.as_str()).unwrap();
     let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DATABASE);
     let (client, conn) = match tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await {
@@ -49,6 +47,35 @@ async fn put_movies(body: web::Form<Response>) -> impl Responder {
 
     if !state.is_empty() {
         client.execute( "UPDATE MOVIES SET STATE = $2 WHERE ID = $1 RETURNING *;", &[&key, &state],).await.unwrap();
+    }
+
+    HttpResponse::Created().finish()
+}
+
+#[put("/v1/serien/update")]
+async fn put_serien(body: web::Form<Response>) -> impl Responder {
+    let values_json: serde_json::Value = serde_json::from_str(body.values.as_str()).unwrap();
+    let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DATABASE);
+    let (client, conn) = match tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await {
+        Ok(c) => c,
+        Err(_e) => {
+            return HttpResponse::Created().finish()
+        }
+    };
+
+    tokio::spawn(async move {
+        if let Err(e) = conn.await {
+            panic!("{}", e.to_string());
+        }
+    });
+
+    let state: String = match &values_json["state"].clone() {
+        serde_json:: Value::String(s) => s.to_string(),
+        _ => "".to_string()
+    };
+
+    if !state.is_empty() {
+        client.execute( "UPDATE SERIEN SET STATE = $2 WHERE ID = $1 RETURNING *;", &[&body.key, &state],).await.unwrap();
     }
 
     HttpResponse::Created().finish()
@@ -87,7 +114,7 @@ async fn get_movies() -> impl Responder {
 }
 
 #[get("/v1/serien")]
-async fn get_series() -> impl Responder {
+async fn get_serien() -> impl Responder {
     let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DATABASE);
     let (client, conn) = match tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await {
         Ok(c) => c,

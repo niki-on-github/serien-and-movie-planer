@@ -7,21 +7,7 @@ import DataGrid, {
   Lookup,
 } from "devextreme-react/data-grid";
 import { createStore } from 'devextreme-aspnet-data-nojquery';
-
-export const states = [
-  {
-    ID: "New",
-    Name: "New",
-  },
-  {
-    ID: "Watched",
-    Name: "Watched",
-  },
-  {
-    ID: "Ignore",
-    Name: "Ignore",
-  },
-];
+import { states } from '../../data/states'
 
 const store = createStore({
     key: "id",
