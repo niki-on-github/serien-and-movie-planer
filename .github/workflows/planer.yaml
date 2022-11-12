@@ -13,7 +13,7 @@ on:
     - reopened
 
 env:
-  REGISTRY_IMAGE: ghcr.io/serien-and-movie-planer
+  REGISTRY_IMAGE: ghcr.io/niki-on-github/serien-and-movie-planer
 
 jobs:
   build:
