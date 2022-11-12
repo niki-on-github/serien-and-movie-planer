@@ -3,13 +3,14 @@ use actix_web::{get, put, Responder, HttpResponse, web};
 use serde_json::json;
 extern crate chrono;
 use serde::Deserialize;
+use std::path::Path;
 use serde_json;
 
-const POSTGRES_USER: &str = "root";
-const POSTGRES_PASSWORD: &str = "Geheim";
-const POSTGRES_HOST: &str = "localhost";
-const POSTGRES_PORT: &str = "5432";
-const POSTGRES_DATABASE: &str = "postgres";
+const DEFAULT_POSTGRES_USER: &str = "root";
+const DEFAULT_POSTGRES_PASSWORD: &str = "postgres";
+const DEFAULT_POSTGRES_HOST: &str = "localhost";
+const DEFAULT_POSTGRES_PORT: &str = "5432";
+const DEFAULT_POSTGRES_DATABASE: &str = "postgres";
 
 
 #[derive(Deserialize)]
@@ -19,14 +20,27 @@ struct Response {
 }
 
 pub fn index() -> Files {
-    Files::new("/", "./frontend/build/").index_file("index.html")
+    if Path::new("/frontend/build").exists() {
+        Files::new("/", "/frontend/build/").index_file("index.html")
+    } else {
+        Files::new("/", "./frontend/build/").index_file("index.html")
+    }
+}
+
+async fn get_postgress_connection() -> Result<(tokio_postgres::Client, tokio_postgres::Connection<tokio_postgres::Socket, tokio_postgres::tls::NoTlsStream>), tokio_postgres::Error> {
+    let user = std::env::var("POSTGRES_USER").unwrap_or(DEFAULT_POSTGRES_USER.to_string());
+    let pw = std::env::var("POSTGRES_PASSWORD").unwrap_or(DEFAULT_POSTGRES_PASSWORD.to_string());
+    let host = std::env::var("POSTGRES_HOST").unwrap_or(DEFAULT_POSTGRES_HOST.to_string());
+    let port = std::env::var("POSTGRES_PORT").unwrap_or(DEFAULT_POSTGRES_PORT.to_string());
+    let db = std::env::var("POSTGRES_DB").unwrap_or(DEFAULT_POSTGRES_DATABASE.to_string());
+    let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", user, pw, host, port, db);
+    tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await
 }
 
 #[put("/v1/movies/update")]
 async fn put_movies(body: web::Form<Response>) -> impl Responder {
     let values_json: serde_json::Value = serde_json::from_str(body.values.as_str()).unwrap();
-    let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DATABASE);
-    let (client, conn) = match tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await {
+    let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
         Err(_e) => {
             return HttpResponse::Created().finish()
@@ -55,8 +69,7 @@ async fn put_movies(body: web::Form<Response>) -> impl Responder {
 #[put("/v1/serien/update")]
 async fn put_serien(body: web::Form<Response>) -> impl Responder {
     let values_json: serde_json::Value = serde_json::from_str(body.values.as_str()).unwrap();
-    let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DATABASE);
-    let (client, conn) = match tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await {
+    let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
         Err(_e) => {
             return HttpResponse::Created().finish()
@@ -83,8 +96,7 @@ async fn put_serien(body: web::Form<Response>) -> impl Responder {
 
 #[get("/v1/movies")]
 async fn get_movies() -> impl Responder {
-    let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DATABASE);
-    let (client, conn) = match tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await {
+    let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
         Err(e) => {
             return json!({
@@ -115,8 +127,7 @@ async fn get_movies() -> impl Responder {
 
 #[get("/v1/serien")]
 async fn get_serien() -> impl Responder {
-    let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DATABASE);
-    let (client, conn) = match tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await {
+    let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
         Err(e) => {
             return json!({

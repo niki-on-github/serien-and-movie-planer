@@ -13,10 +13,10 @@ from datetime import datetime, timedelta
 SERIEN_URL = "https://www.serienjunkies.de/docs/serienplaner.html"
 FILME_URL = "https://www.videobuster.de/top-dvd-verleih-30-tage.php?pospage=1&search_title&tab_search_content=movies&view=9&wrapped=100#titlelist_head"
 POSTGRES_USER = os.getenv('POSTGRES_USER', "root")
-POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', "Geheim")
+POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', "postgres")
 POSTGRES_HOST = os.getenv('POSTGRES_HOST', "localhost")
 POSTGRES_PORT = os.getenv('POSTGRES_PORT', "5432")
-POSTGRES_DATABASE = os.getenv('POSTGRES_DATABASE', "postgres")
+POSTGRES_DATABASE = os.getenv('POSTGRES_DB', "postgres")
 
 
 def fetch_serien() -> list:

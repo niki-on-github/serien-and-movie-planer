@@ -9,22 +9,12 @@ static DEFAULT_RUST_LOG: &str = "actix_web=info";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let rust_log = match std::env::var("RUST_LOG") {
-        Ok(val) => val,
-        Err(_e) => DEFAULT_RUST_LOG.to_string(),
-    };
+    let rust_log = std::env::var("RUST_LOG").unwrap_or(DEFAULT_RUST_LOG.to_string());
     std::env::set_var("RUST_LOG", rust_log);
     env_logger::init();
 
-    let port: u16 = match std::env::var("PORT") {
-        Ok(val) => val.parse::<u16>().unwrap_or(DEFAULT_PORT),
-        Err(_e) => DEFAULT_PORT,
-    };
-
-    let host = match std::env::var("HOST") {
-        Ok(val) => val,
-        Err(_e) => DEFAULT_HOST.to_string(),
-    };
+    let port: u16 = std::env::var("PORT").unwrap_or(DEFAULT_PORT.to_string()).parse::<u16>().unwrap_or(DEFAULT_PORT);
+    let host = std::env::var("HOST").unwrap_or(DEFAULT_HOST.to_string());
 
     println!("Start Server {}:{}", host, port);
     HttpServer::new(|| {
