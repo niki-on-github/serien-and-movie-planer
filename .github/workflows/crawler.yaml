@@ -1,4 +1,4 @@
-name: CI
+name: serien-and-movie-crawler
 
 on:
   workflow_dispatch:

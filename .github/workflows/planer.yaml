@@ -1,4 +1,4 @@
-name: CI
+name: serien-and-movie-planer
 
 on:
   workflow_dispatch:
