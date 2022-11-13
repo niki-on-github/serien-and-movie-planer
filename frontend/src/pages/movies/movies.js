@@ -36,10 +36,10 @@ export default function Movies() {
           allowAdding={false}
           allowDeleting={false}
         />
-        <Column dataField="title" caption="Title" />
-        <Column dataField="longTitle" caption="Long Title" />
-        <Column dataField="date" caption="Date" />
-        <Column dataField="state" caption="State">
+        <Column dataField="title" caption="Title" dataType="string" />
+        <Column dataField="longTitle" caption="Long Title" dataType="string" />
+        <Column dataField="date" caption="Date" dataType="date" />
+        <Column dataField="state" caption="State" dataType="string" filterValue="New">
           <Lookup dataSource={states} valueExpr="ID" displayExpr="Name" />
         </Column>
       </DataGrid>

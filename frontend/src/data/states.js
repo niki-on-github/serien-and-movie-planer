@@ -11,4 +11,8 @@ export const states = [
     ID: "Ignore",
     Name: "Ignore",
   },
+  {
+    ID: "Bookmarked",
+    Name: "Bookmarked",
+  },
 ];
