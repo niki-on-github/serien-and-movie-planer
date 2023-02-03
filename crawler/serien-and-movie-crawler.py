@@ -10,6 +10,7 @@ import argparse
 
 from bs4 import BeautifulSoup  # pip install beautifulsoup4
 from datetime import datetime, timedelta
+import dateutil.parser
 
 SERIEN_URL = "https://www.serienjunkies.de/docs/serienplaner.html"
 FILME_URL = "https://www.videobuster.de/top-dvd-verleih-30-tage.php?pospage=1&search_title&tab_search_content=movies&view=9&wrapped=100#titlelist_head"
@@ -31,7 +32,7 @@ def debug_print(title, objs):
 
 
 def fetch_serien(debug = False) -> list:
-    locale.setlocale(locale.LC_TIME, "de_DE.utf8")
+    locale.setlocale(locale.LC_TIME, ("de_DE", "UTF8"))
     html_text = BeautifulSoup(requests.get(SERIEN_URL).text, 'html.parser')
 
     database = list()
@@ -54,28 +55,21 @@ def fetch_serien(debug = False) -> list:
             if debug:
                 print("season:", season)
             date = tablecels[1].findAll('div')[0].text.strip().replace("Serienstart", "")
-            if debug:
-                print("date:", date)
 
             if "Morgen" in date:
                 date = (datetime.now() + timedelta(1)).date()
             elif "Heute" in date:
                 date = datetime.now().date()
             else:
-                year = int(datetime.now().date().strftime("%Y"))
-                date = date.split(str(year), 2)
-                if len(date) == 2:
-                    date = datetime.strptime(date[0] + str(year), '%A, %d. %B %Y').date()
-                else:
-                    date = date.split(str(year-1), 2)
-                    if len(date) == 2:
-                        date = datetime.strptime(date[0] + str(year-1), '%A, %d. %B %Y').date()
-                    else:
-                        date = date.split(str(year+1), 2)
-                        if len(date) == 2:
-                            date = datetime.strptime(date[0] + str(year+1), '%A, %d. %B %Y').date()
-                        else:
-                            date = "?"
+                date = date.split("  ", 2)[0]
+                for x in ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]:
+                    date = date.replace(x, "")
+                date = date.replace(",", "")
+                date = date.strip()
+                if debug:
+                    print("date:", date)
+                date = dateutil.parser.parse(date[0])
+
             try:
                 sender = tablecels[2].findAll('a')[0].attrs['href'].replace("/sender/", "").replace("/", "")
             except:
