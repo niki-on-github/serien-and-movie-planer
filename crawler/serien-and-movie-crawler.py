@@ -48,27 +48,36 @@ def fetch_serien(debug = False) -> list:
                 debug_print("tablecels", tablecels)
             if len(tablecels) != 3:
                 continue
-            title = tablecels[1].findAll('a')[0].text.strip()
+            title = tablecels[1].findAll('a')
+
+            if len(title) == 0:
+                continue
+
+            title = title[0].text.strip()
             if debug:
                 print("title:", title)
             season = tablecels[1].findAll('a')[0].attrs['href'].split("/")[-1].replace(".html", "").replace("season", "")
             if debug:
                 print("season:", season)
-            date = tablecels[1].findAll('div')[0].text.strip().replace("Serienstart", "")
+            date = tablecels[1].findAll('div')[0].text.replace("Serienstart", "").strip()
 
             if "Morgen" in date:
                 date = (datetime.now() + timedelta(1)).date()
             elif "Heute" in date:
                 date = datetime.now().date()
+            elif "Übermorgen" in date:
+                date = (datetime.now() + timedelta(2)).date()
             else:
                 date = date.split("  ", 2)[0]
                 for x in ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]:
                     date = date.replace(x, "")
+                for idx, x in enumerate(["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "Oktober", "November", "Dezember"]):
+                    date = date.replace(x, str(idx+1))
                 date = date.replace(",", "")
                 date = date.strip()
                 if debug:
                     print("date:", date)
-                date = dateutil.parser.parse(date[0])
+                date = dateutil.parser.parse(date)
 
             try:
                 sender = tablecels[2].findAll('a')[0].attrs['href'].replace("/sender/", "").replace("/", "")
@@ -85,6 +94,8 @@ def fetch_serien(debug = False) -> list:
                     'sender': sender.encode("ascii", "ignore").decode()
                     })
         except:
+            try: debug_print("tablerow", tablerow)
+            except: pass
             traceback.print_exc()
 
     return database
