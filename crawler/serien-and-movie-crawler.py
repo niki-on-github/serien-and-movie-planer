@@ -6,6 +6,7 @@ import locale
 import traceback
 import logging
 import psycopg2
+import argparse
 
 from bs4 import BeautifulSoup  # pip install beautifulsoup4
 from datetime import datetime, timedelta
@@ -19,21 +20,43 @@ POSTGRES_PORT = os.getenv('POSTGRES_PORT', "5432")
 POSTGRES_DATABASE = os.getenv('POSTGRES_DB', "postgres")
 
 
-def fetch_serien() -> list:
+def debug_print(title, objs):
+    if not isinstance(objs, list):
+        objs = [objs]
+    for idx, obj in enumerate(objs):
+        debug_txt = str(obj).replace("\n", " ")
+        while "  " in debug_txt:
+            debug_txt = debug_txt.replace("  ", " ")
+        print(title, idx, ":", debug_txt)
+
+
+def fetch_serien(debug = False) -> list:
     locale.setlocale(locale.LC_TIME, "de_DE.utf8")
     html_text = BeautifulSoup(requests.get(SERIEN_URL).text, 'html.parser')
 
     database = list()
     tablerows = html_text.findAll('div', {'class':'tablerow'})
     for tablerow in tablerows:
+        if debug:
+            print("")
+            print("="*80)
+            debug_print("tablerow", tablerow)
         try:
-            tablecels = tablerow.findAll('div', {'class':'tdva'})
-            if len(tablecels) != 2:
+            tablecels = tablerow.findAll('div', {'class':'tablecell'})
+            if debug:
+                debug_print("tablecels", tablecels)
+            if len(tablecels) != 3:
                 continue
-            title = tablecels[0].findAll('div')[0].text.strip().split("Staffel")
-            season = title[1].strip() if len(title) > 1 else "0"
-            title = title[0].strip()
-            date = tablecels[0].findAll('div')[1].text.strip()
+            title = tablecels[1].findAll('a')[0].text.strip()
+            if debug:
+                print("title:", title)
+            season = tablecels[1].findAll('a')[0].attrs['href'].split("/")[-1].replace(".html", "").replace("season", "")
+            if debug:
+                print("season:", season)
+            date = tablecels[1].findAll('div')[0].text.strip().replace("Serienstart", "")
+            if debug:
+                print("date:", date)
+
             if "Morgen" in date:
                 date = (datetime.now() + timedelta(1)).date()
             elif "Heute" in date:
@@ -42,21 +65,24 @@ def fetch_serien() -> list:
                 year = int(datetime.now().date().strftime("%Y"))
                 date = date.split(str(year), 2)
                 if len(date) == 2:
-                    date = datetime.strptime(date[0] + str(year), '%A, %d.%B %Y').date()
+                    date = datetime.strptime(date[0] + str(year), '%A, %d. %B %Y').date()
                 else:
                     date = date.split(str(year-1), 2)
                     if len(date) == 2:
-                        date = datetime.strptime(date[0] + str(year-1), '%A, %d.%B %Y').date()
+                        date = datetime.strptime(date[0] + str(year-1), '%A, %d. %B %Y').date()
                     else:
                         date = date.split(str(year+1), 2)
                         if len(date) == 2:
-                            date = datetime.strptime(date[0] + str(year+1), '%A, %d.%B %Y').date()
+                            date = datetime.strptime(date[0] + str(year+1), '%A, %d. %B %Y').date()
                         else:
                             date = "?"
             try:
-                sender = tablecels[1].img['title'].strip()
+                sender = tablecels[2].findAll('a')[0].attrs['href'].replace("/sender/", "").replace("/", "")
             except:
-                sender = tablecels[1].a['title'].strip()
+                sender = "unknown"
+
+            if debug:
+                print("sender:", sender)
 
             database.append({
                     'title': title.encode("ascii", "ignore").decode(),
@@ -70,7 +96,7 @@ def fetch_serien() -> list:
     return database
 
 
-def fetch_movies() -> list:
+def fetch_movies(debug = False) -> list:
     locale.setlocale(locale.LC_TIME, "de_DE.utf8")
     html_text = BeautifulSoup(requests.get(FILME_URL).text, 'html.parser')
 
@@ -96,6 +122,21 @@ def fetch_movies() -> list:
             traceback.print_exc()
 
     return database
+
+
+class DebugDatabase():
+
+    def __ini__(self):
+        pass
+
+    def commit(self):
+        pass
+
+    def insert_serie(self, data):
+        print("insert", data)
+
+    def insert_movie(self, data):
+        print("insert", data)
 
 
 class Database:
@@ -193,17 +234,25 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     setup_logging()
 
-    db = Database()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true', help="use debug mode")
+    parser.add_argument('--skip-movies', action='store_true', help="skip fetch movies")
+    parser.add_argument('--skip-serien', action='store_true', help="skip fetch serien")
+    args = parser.parse_args()
 
-    logger.info("fetch new movies")
-    movies = fetch_movies()
-    for movie in movies:
-        db.insert_movie(movie)
+    db = DebugDatabase() if args.debug else Database()
 
-    logger.info("fetch new serien")
-    serien = fetch_serien()
-    for serie in serien:
-        db.insert_serie(serie)
+    if not args.skip_movies:
+        logger.info("fetch new movies")
+        movies = fetch_movies(args.debug)
+        for movie in movies:
+            db.insert_movie(movie)
+
+    if not args.skip_serien:
+        logger.info("fetch new serien")
+        serien = fetch_serien(args.debug)
+        for serie in serien:
+            db.insert_serie(serie)
 
     db.commit()
     logger.info("movies and serien data crawler completed")
