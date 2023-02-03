@@ -11,8 +11,7 @@ RUN pip install \
     beautifulsoup4 \
     python-dateutil \
     requests \
-    psycopg2 \
-    dateutil
+    psycopg2
 
 RUN mkdir -p /app
 
