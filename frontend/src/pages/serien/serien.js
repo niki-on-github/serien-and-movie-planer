@@ -21,8 +21,6 @@ const store = createStore({
 export default function Serien() {
   return (
     <>
-      <h2 className={"content-block"}>Serien</h2>
-
       <DataGrid
         dataSource={store}
         showBorders={true}

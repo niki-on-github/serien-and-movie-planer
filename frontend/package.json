@@ -15,7 +15,10 @@
     "react-app-polyfill": "^1.0.0",
     "devextreme": "^22.1.3",
     "devextreme-react": "^22.1.3",
-    "devextreme-aspnet-data-nojquery": "^2.8.6"
+    "devextreme-aspnet-data-nojquery": "^2.8.6",
+    "@mui/material": "5.11.8",
+    "@mui/icons-material": "5.11.0",
+    "@emotion/styled": "11.10.5"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -20,8 +20,6 @@ const store = createStore({
 export default function Movies() {
   return (
     <>
-      <h2 className={"content-block"}>Movies</h2>
-
       <DataGrid
         dataSource={store}
         showBorders={true}
