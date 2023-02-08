@@ -18,7 +18,8 @@
     "devextreme-aspnet-data-nojquery": "^2.8.6",
     "@mui/material": "5.11.8",
     "@mui/icons-material": "5.11.0",
-    "@emotion/styled": "11.10.5"
+    "@emotion/styled": "11.10.5",
+    "styled-components": "5.3.6"
   },
   "scripts": {
     "start": "react-scripts start",

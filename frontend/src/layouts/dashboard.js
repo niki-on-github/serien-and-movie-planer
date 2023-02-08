@@ -16,6 +16,19 @@ import { navigation } from "../navigation";
 import Avatar from "@mui/material/Avatar";
 import { NavLink } from "react-router-dom";
 import { useNavigation } from "../contexts/navigation";
+import styled from "styled-components";
+
+const StyledLink = styled(NavLink)`
+  color: black;
+  text-decoration: none;
+  flex: 1;
+  font-weight: "bold";
+
+  &.active {
+    color: white;
+    background-color: #2196f3;
+  }
+`;
 
 export default function DashboardLayout({ children }) {
   const [drawerState, setDrawerState] = React.useState(false);
@@ -31,14 +44,6 @@ export default function DashboardLayout({ children }) {
     }
 
     setDrawerState(open);
-  };
-
-  let activeStyle = {
-    textDecoration: "none",
-  };
-
-  let inactiveStyle = {
-    textDecoration: "none",
   };
 
   function capitalizeFirstLetter(string) {
@@ -85,19 +90,18 @@ export default function DashboardLayout({ children }) {
           <Divider />
           <List>
             {navigation.map((item) => (
-              <NavLink
-                to={item.path}
-                style={({ isActive }) =>
-                  isActive ? activeStyle : inactiveStyle
-                }
-              >
-                <ListItem key={item.text} disablePadding>
+              <ListItem key={item.text} disablePadding>
+                <StyledLink to={item.path}>
                   <ListItemButton>
-                    <ListItemIcon>{item.icon}</ListItemIcon>
-                    <ListItemText primary={item.text} />
+                    <ListItemIcon sx={{ ml: 1.5 }} style={{ color: "inherit" }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={<Typography>{item.text}</Typography>}
+                    />
                   </ListItemButton>
-                </ListItem>
-              </NavLink>
+                </StyledLink>
+              </ListItem>
             ))}
           </List>
         </Box>
