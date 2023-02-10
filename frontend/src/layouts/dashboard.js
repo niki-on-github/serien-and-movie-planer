@@ -83,9 +83,9 @@ export default function DashboardLayout({ children }) {
             display="flex"
             justifyContent="center"
             alignItems="center"
-            sx={{ flexGrow: 1, mt: 3, mb: 3 }}
+            sx={{ flexGrow: 1, mt: 1, mb: 1, ml: -1 }}
           >
-            <Avatar src="logo512.png" />
+            <Avatar src="logo.png" sx={{ width: 90, height: 90 }} />
           </Box>
           <Divider />
           <List>
