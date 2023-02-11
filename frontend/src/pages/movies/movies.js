@@ -11,10 +11,10 @@ import { states } from '../../data/states'
 
 const store = createStore({
     key: "id",
-    loadUrl: "/v1/movies",
-    insertUrl: "/v1/movies/insert",
-    updateUrl: "/v1/movies/update",
-    deleteUrl: "/v1/movies/delete"
+    loadUrl: "/api/v1/movies",
+    insertUrl: "/api/v1/movies/insert",
+    updateUrl: "/api/v1/movies/update",
+    deleteUrl: "/api/v1/movies/delete"
 });
 
 export default function Movies() {

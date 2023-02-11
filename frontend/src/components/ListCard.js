@@ -14,7 +14,7 @@ function ListCard({ title, content }) {
         {Object.keys(content).map((key) => {
           return (
             <>
-              <ListItem secondaryAction={<>test</>}>
+              <ListItem secondaryAction={<>{content[key]}</>}>
                 <ListItemText primary={key} />
               </ListItem>
               <Divider />

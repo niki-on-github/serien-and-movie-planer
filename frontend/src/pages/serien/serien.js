@@ -12,10 +12,10 @@ import { states } from '../../data/states'
 
 const store = createStore({
     key: "id",
-    loadUrl: "/v1/serien",
-    insertUrl: "/v1/serien/insert",
-    updateUrl: "/v1/serien/update",
-    deleteUrl: "/v1/serien/delete"
+    loadUrl: "/api/v1/serien",
+    insertUrl: "/api/v1/serien/insert",
+    updateUrl: "/api/v1/serien/update",
+    deleteUrl: "/api/v1/serien/delete"
 });
 
 export default function Serien() {

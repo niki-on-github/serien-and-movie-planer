@@ -43,7 +43,7 @@ async fn get_postgress_connection() -> Result<
     tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await
 }
 
-#[put("/v1/movies/update")]
+#[put("/api/v1/movies/update")]
 async fn put_movies(body: web::Form<Response>) -> impl Responder {
     let values_json: serde_json::Value = serde_json::from_str(body.values.as_str()).unwrap();
     let (client, conn) = match get_postgress_connection().await {
@@ -76,7 +76,7 @@ async fn put_movies(body: web::Form<Response>) -> impl Responder {
     HttpResponse::Created().finish()
 }
 
-#[put("/v1/serien/update")]
+#[put("/api/v1/serien/update")]
 async fn put_serien(body: web::Form<Response>) -> impl Responder {
     let values_json: serde_json::Value = serde_json::from_str(body.values.as_str()).unwrap();
     let (client, conn) = match get_postgress_connection().await {
@@ -108,7 +108,7 @@ async fn put_serien(body: web::Form<Response>) -> impl Responder {
     HttpResponse::Created().finish()
 }
 
-#[get("/v1/movies")]
+#[get("/api/v1/movies")]
 async fn get_movies() -> impl Responder {
     let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
@@ -144,7 +144,7 @@ async fn get_movies() -> impl Responder {
     json!(movies).to_string()
 }
 
-#[get("/v1/serien")]
+#[get("/api/v1/serien")]
 async fn get_serien() -> impl Responder {
     let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
@@ -181,7 +181,7 @@ async fn get_serien() -> impl Responder {
     json!(serien).to_string()
 }
 
-#[get("/v1/serien/count")]
+#[get("/api/v1/serien/count")]
 async fn get_serien_count() -> impl Responder {
     let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
@@ -214,7 +214,7 @@ async fn get_serien_count() -> impl Responder {
     json!(map).to_string()
 }
 
-#[get("/v1/movies/count")]
+#[get("/api/v1/movies/count")]
 async fn get_movies_count() -> impl Responder {
     let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
