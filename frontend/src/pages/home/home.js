@@ -1,4 +1,6 @@
 import Box from "@mui/material/Box";
+import ListCard from "../../components/ListCard";
+import { Typography } from '@mui/material';
 
 export default function Home() {
   return (
