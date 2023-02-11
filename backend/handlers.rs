@@ -1,17 +1,17 @@
 use actix_files::Files;
-use actix_web::{get, put, Responder, HttpResponse, web};
+use actix_web::{get, put, web, HttpResponse, Responder};
 use serde_json::json;
 extern crate chrono;
 use serde::Deserialize;
-use std::path::Path;
 use serde_json;
+use serde_json::Number;
+use std::path::Path;
 
 const DEFAULT_POSTGRES_USER: &str = "root";
 const DEFAULT_POSTGRES_PASSWORD: &str = "postgres";
 const DEFAULT_POSTGRES_HOST: &str = "localhost";
 const DEFAULT_POSTGRES_PORT: &str = "5432";
 const DEFAULT_POSTGRES_DATABASE: &str = "postgres";
-
 
 #[derive(Deserialize)]
 struct Response {
@@ -27,7 +27,13 @@ pub fn index() -> Files {
     }
 }
 
-async fn get_postgress_connection() -> Result<(tokio_postgres::Client, tokio_postgres::Connection<tokio_postgres::Socket, tokio_postgres::tls::NoTlsStream>), tokio_postgres::Error> {
+async fn get_postgress_connection() -> Result<
+    (
+        tokio_postgres::Client,
+        tokio_postgres::Connection<tokio_postgres::Socket, tokio_postgres::tls::NoTlsStream>,
+    ),
+    tokio_postgres::Error,
+> {
     let user = std::env::var("POSTGRES_USER").unwrap_or(DEFAULT_POSTGRES_USER.to_string());
     let pw = std::env::var("POSTGRES_PASSWORD").unwrap_or(DEFAULT_POSTGRES_PASSWORD.to_string());
     let host = std::env::var("POSTGRES_HOST").unwrap_or(DEFAULT_POSTGRES_HOST.to_string());
@@ -42,9 +48,7 @@ async fn put_movies(body: web::Form<Response>) -> impl Responder {
     let values_json: serde_json::Value = serde_json::from_str(body.values.as_str()).unwrap();
     let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
-        Err(_e) => {
-            return HttpResponse::Created().finish()
-        }
+        Err(_e) => return HttpResponse::Created().finish(),
     };
 
     tokio::spawn(async move {
@@ -54,13 +58,19 @@ async fn put_movies(body: web::Form<Response>) -> impl Responder {
     });
 
     let state: String = match &values_json["state"].clone() {
-        serde_json:: Value::String(s) => s.to_string(),
-        _ => "".to_string()
+        serde_json::Value::String(s) => s.to_string(),
+        _ => "".to_string(),
     };
     let key = body.key.parse::<i32>().unwrap();
 
     if !state.is_empty() {
-        client.execute( "UPDATE MOVIES SET STATE = $2 WHERE ID = $1 RETURNING *;", &[&key, &state],).await.unwrap();
+        client
+            .execute(
+                "UPDATE MOVIES SET STATE = $2 WHERE ID = $1 RETURNING *;",
+                &[&key, &state],
+            )
+            .await
+            .unwrap();
     }
 
     HttpResponse::Created().finish()
@@ -71,9 +81,7 @@ async fn put_serien(body: web::Form<Response>) -> impl Responder {
     let values_json: serde_json::Value = serde_json::from_str(body.values.as_str()).unwrap();
     let (client, conn) = match get_postgress_connection().await {
         Ok(c) => c,
-        Err(_e) => {
-            return HttpResponse::Created().finish()
-        }
+        Err(_e) => return HttpResponse::Created().finish(),
     };
 
     tokio::spawn(async move {
@@ -83,12 +91,18 @@ async fn put_serien(body: web::Form<Response>) -> impl Responder {
     });
 
     let state: String = match &values_json["state"].clone() {
-        serde_json:: Value::String(s) => s.to_string(),
-        _ => "".to_string()
+        serde_json::Value::String(s) => s.to_string(),
+        _ => "".to_string(),
     };
 
     if !state.is_empty() {
-        client.execute( "UPDATE SERIEN SET STATE = $2 WHERE ID = $1 RETURNING *;", &[&body.key, &state],).await.unwrap();
+        client
+            .execute(
+                "UPDATE SERIEN SET STATE = $2 WHERE ID = $1 RETURNING *;",
+                &[&body.key, &state],
+            )
+            .await
+            .unwrap();
     }
 
     HttpResponse::Created().finish()
@@ -101,7 +115,8 @@ async fn get_movies() -> impl Responder {
         Err(e) => {
             return json!({
                 "error": e.to_string()
-            }).to_string();
+            })
+            .to_string();
         }
     };
 
@@ -112,7 +127,11 @@ async fn get_movies() -> impl Responder {
     });
 
     let mut movies: Vec<serde_json::Value> = Vec::new();
-    for row in client.query("SELECT ID,TITLE,LONG_TITLE,DATE,STATE FROM MOVIES", &[]).await.unwrap_or(Vec::new()) {
+    for row in client
+        .query("SELECT ID,TITLE,LONG_TITLE,DATE,STATE FROM MOVIES", &[])
+        .await
+        .unwrap_or(Vec::new())
+    {
         movies.push(json!({
                 "id": row.get::<usize, i32>(0),
                 "title": row.get::<usize, &str>(1),
@@ -132,7 +151,8 @@ async fn get_serien() -> impl Responder {
         Err(e) => {
             return json!({
                 "error": e.to_string()
-            }).to_string();
+            })
+            .to_string();
         }
     };
 
@@ -143,7 +163,11 @@ async fn get_serien() -> impl Responder {
     });
 
     let mut serien: Vec<serde_json::Value> = Vec::new();
-    for row in client.query("SELECT ID,TITLE,SEASON,DATE,SENDER,STATE FROM SERIEN", &[]).await.unwrap_or(Vec::new()) {
+    for row in client
+        .query("SELECT ID,TITLE,SEASON,DATE,SENDER,STATE FROM SERIEN", &[])
+        .await
+        .unwrap_or(Vec::new())
+    {
         serien.push(json!({
                 "id": row.get::<usize, &str>(0),
                 "title": row.get::<usize, &str>(1),
@@ -155,4 +179,70 @@ async fn get_serien() -> impl Responder {
     }
 
     json!(serien).to_string()
+}
+
+#[get("/v1/serien/count")]
+async fn get_serien_count() -> impl Responder {
+    let (client, conn) = match get_postgress_connection().await {
+        Ok(c) => c,
+        Err(e) => {
+            return json!({
+                "error": e.to_string()
+            })
+            .to_string();
+        }
+    };
+
+    tokio::spawn(async move {
+        if let Err(e) = conn.await {
+            panic!("{}", e.to_string());
+        }
+    });
+
+    let mut map = serde_json::Map::new();
+    for row in client
+        .query("SELECT STATE,COUNT(STATE) FROM SERIEN GROUP BY STATE", &[])
+        .await
+        .unwrap_or(Vec::new())
+    {
+        map.insert(
+            row.get::<usize, &str>(0).to_string(),
+            serde_json::Value::Number(Number::from(row.get::<usize, i64>(1))),
+        );
+    }
+
+    json!(map).to_string()
+}
+
+#[get("/v1/movies/count")]
+async fn get_movies_count() -> impl Responder {
+    let (client, conn) = match get_postgress_connection().await {
+        Ok(c) => c,
+        Err(e) => {
+            return json!({
+                "error": e.to_string()
+            })
+            .to_string();
+        }
+    };
+
+    tokio::spawn(async move {
+        if let Err(e) = conn.await {
+            panic!("{}", e.to_string());
+        }
+    });
+
+    let mut map = serde_json::Map::new();
+    for row in client
+        .query("SELECT STATE,COUNT(STATE) FROM MOVIES GROUP BY STATE", &[])
+        .await
+        .unwrap_or(Vec::new())
+    {
+        map.insert(
+            row.get::<usize, &str>(0).to_string(),
+            serde_json::Value::Number(Number::from(row.get::<usize, i64>(1))),
+        );
+    }
+
+    json!(map).to_string()
 }

@@ -13,7 +13,10 @@ async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", rust_log);
     env_logger::init();
 
-    let port: u16 = std::env::var("PORT").unwrap_or(DEFAULT_PORT.to_string()).parse::<u16>().unwrap_or(DEFAULT_PORT);
+    let port: u16 = std::env::var("PORT")
+        .unwrap_or(DEFAULT_PORT.to_string())
+        .parse::<u16>()
+        .unwrap_or(DEFAULT_PORT);
     let host = std::env::var("HOST").unwrap_or(DEFAULT_HOST.to_string());
 
     println!("Start Server {}:{}", host, port);

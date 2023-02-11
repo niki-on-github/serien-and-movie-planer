@@ -5,7 +5,7 @@ import sys
 import logging
 
 POSTGRES_USER = "root"
-POSTGRES_PASSWORD = "Geheim"
+POSTGRES_PASSWORD = "postgres"
 POSTGRES_HOST = "localhost"
 POSTGRES_PORT = "5432"
 POSTGRES_DATABASE = "postgres"
