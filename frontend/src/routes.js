@@ -1,4 +1,4 @@
-import { HomePage, Movies, Serien } from './pages';
+import { HomePage, Movies, Serien, Editor } from './pages';
 import { withNavigationWatcher } from './contexts/navigation';
 
 const routes = [
@@ -13,6 +13,10 @@ const routes = [
     {
         path: '/serien',
         element: Serien
+    },
+    {
+        path: '/editor',
+        element: Editor
     }
 ];
 
