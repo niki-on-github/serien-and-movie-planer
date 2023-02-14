@@ -17,6 +17,9 @@ import Avatar from "@mui/material/Avatar";
 import { NavLink } from "react-router-dom";
 import { useNavigation } from "../contexts/navigation";
 import styled from "styled-components";
+import useWindowDimensions from "../contexts/WindowDimension";
+import useAppbarHeight from "../contexts/AppBarHeight";
+import { createTheme } from "@mui/material/styles";
 
 const StyledLink = styled(NavLink)`
   color: black;
@@ -31,6 +34,9 @@ const StyledLink = styled(NavLink)`
 `;
 
 export default function DashboardLayout({ children }) {
+const theme = createTheme();
+  const { height, width } = useWindowDimensions();
+  const appbarHeight = useAppbarHeight();
   const [drawerState, setDrawerState] = React.useState(false);
   const {
     navigationData: { currentPath },
@@ -52,7 +58,7 @@ export default function DashboardLayout({ children }) {
 
   return (
     <>
-      <Box sx={{ flexGrow: 1, ml: -1, mr: -1, mt: -1 }}>
+      <Box sx={{ flexGrow: 1 }}>
         <AppBar position="static">
           <Toolbar>
             <IconButton
@@ -106,7 +112,9 @@ export default function DashboardLayout({ children }) {
           </List>
         </Box>
       </Drawer>
-      {children}
+      <Box height={height - appbarHeight - theme.spacing(2).replace('px','')} sx={{ flexGrow: 1 }}>
+        {children}
+      </Box>
     </>
   );
 }

@@ -8,6 +8,7 @@ import DataGrid, {
 } from "devextreme-react/data-grid";
 import { createStore } from 'devextreme-aspnet-data-nojquery';
 import { states } from '../../data/states'
+import Box from "@mui/material/Box";
 
 const store = createStore({
     key: "id",
@@ -19,7 +20,7 @@ const store = createStore({
 
 export default function Movies() {
   return (
-    <>
+    <Box sx={{ m: 2 }}>
       <DataGrid
         dataSource={store}
         showBorders={true}
@@ -41,6 +42,6 @@ export default function Movies() {
           <Lookup dataSource={states} valueExpr="ID" displayExpr="Name" />
         </Column>
       </DataGrid>
-    </>
+    </Box>
   );
 }
