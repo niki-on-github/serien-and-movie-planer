@@ -49,7 +49,7 @@ def fetch_serien(debug = False) -> list:
                 debug_print("tablecels", tablecels)
             if len(tablecels) != 3:
                 continue
-            title = tablecels[1].findAll('a')
+            title = tablecels[1].findAll('p')
 
             if len(title) == 0:
                 continue
