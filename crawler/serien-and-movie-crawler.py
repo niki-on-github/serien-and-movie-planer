@@ -57,9 +57,13 @@ def fetch_serien(debug = False) -> list:
             title = title[0].text.strip()
             if debug:
                 print("title:", title)
-            season = tablecels[1].findAll('a')[0].attrs['href'].split("/")[-1].replace(".html", "").replace("season", "")
+            season = tablecels[1].findAll('a')[0].attrs['href'].split("/")[-1].replace(".html", "").replace("season", "").encode("ascii", "ignore").decode()
             if season == "":
                 logger.warning("Season is empty for %s", title)
+                season = "0"
+
+            if not season.isnumeric():
+                logger.warning("Season '%s' is not an Season number for %s", season, title)
                 season = "0"
 
             if debug:
