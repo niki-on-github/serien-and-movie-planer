@@ -32,6 +32,7 @@ def debug_print(title, objs):
 
 
 def fetch_serien(debug = False) -> list:
+    logger = logging.getLogger("serien")
     locale.setlocale(locale.LC_TIME, ("de_DE", "UTF8"))
     html_text = BeautifulSoup(requests.get(SERIEN_URL).text, 'html.parser')
 
@@ -57,6 +58,10 @@ def fetch_serien(debug = False) -> list:
             if debug:
                 print("title:", title)
             season = tablecels[1].findAll('a')[0].attrs['href'].split("/")[-1].replace(".html", "").replace("season", "")
+            if season == "":
+                logger.warning("Season is empty for %s", title)
+                season = "0"
+
             if debug:
                 print("season:", season)
             date = tablecels[1].findAll('div')[0].text.replace("Serienstart", "").strip()
