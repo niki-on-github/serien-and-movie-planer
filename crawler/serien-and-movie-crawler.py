@@ -262,11 +262,11 @@ if __name__ == "__main__":
         for movie in movies:
             db.insert_movie(movie)
 
-    if not args.skip_serien:
-        logger.info("fetch new serien")
-        serien = fetch_serien(args.debug)
-        for serie in serien:
-            db.insert_serie(serie)
+    # if not args.skip_serien:
+    #     logger.info("fetch new serien")
+    #     serien = fetch_serien(args.debug)
+    #     for serie in serien:
+    #         db.insert_serie(serie)
 
     db.commit()
     logger.info("movies and serien data crawler completed")
