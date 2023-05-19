@@ -136,7 +136,7 @@ class TheMovieDb:
             for page in range(1,search_pages+1):
                 for item in self.fetch_discover_tv_relevant(page):
                     data = self.fetch_tv_relevant(item['id'])
-                    if not data["active"]:
+                    if "active" in data and not data["active"]:
                         result.append({
                             "id": str(data["id"]) + "-" + str(data["last_season"]),
                             "name": data["name"],
