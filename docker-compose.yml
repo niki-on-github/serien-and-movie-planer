@@ -33,3 +33,4 @@ services:
       - POSTGRES_PASSWORD=myrandomsecret
       - POSTGRES_DB=postgres
       - POSTGRES_HOST=postgres
+      - THE_MOVIE_DB_API_KEY=""
