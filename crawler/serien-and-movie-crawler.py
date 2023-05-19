@@ -139,7 +139,7 @@ class TheMovieDb:
                     if "active" in data and not data["active"]:
                         result.append({
                             "id": str(data["id"]) + "-" + str(data["last_season"]),
-                            "name": data["name"],
+                            "title": data["name"],
                             "season": data["last_season"],
                             "date": data["last_air_date"]
                         })
@@ -277,14 +277,21 @@ if __name__ == "__main__":
         logger.info("fetch new movies")
         movies = video_buster.fetch_movies()
         for movie in movies:
-            db.insert_movie(movie)
+            try:
+                db.insert_movie(movie)
+            except Exception as ex:
+                logger.exception(ex)
 
     the_movide_db = TheMovieDb(the_movie_db_api_key, args.debug)
     if not args.skip_serien:
         logger.info("fetch new serien")
         serien = the_movide_db.fetch_completed_series_seasons()
         for serie in serien:
-            db.insert_serie(serie)
+            try:
+                db.insert_serie(serie)
+            except Exception as ex:
+                logger.exception(ex)
+
 
     db.commit()
     logger.info("movies and serien data crawler completed")
