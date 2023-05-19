@@ -164,7 +164,7 @@ async fn get_serien() -> impl Responder {
 
     let mut serien: Vec<serde_json::Value> = Vec::new();
     for row in client
-        .query("SELECT ID,TITLE,SEASON,DATE,SENDER,STATE FROM SERIEN", &[])
+        .query("SELECT ID,TITLE,SEASON,DATE,STATE FROM SERIEN", &[])
         .await
         .unwrap_or(Vec::new())
     {
@@ -173,8 +173,7 @@ async fn get_serien() -> impl Responder {
                 "title": row.get::<usize, &str>(1),
                 "season": row.get::<usize, i32>(2),
                 "date": row.get::<usize, chrono::NaiveDate>(3).format("%Y-%m-%d").to_string(),
-                "sender": row.get::<usize, &str>(4),
-                "state": row.get::<usize, &str>(5),
+                "state": row.get::<usize, &str>(4),
         }));
     }
 
