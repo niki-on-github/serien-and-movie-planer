@@ -6,14 +6,14 @@ import locale
 import traceback
 import logging
 import psycopg2
+import time
 import argparse
+import sys
+import datetime
 
 from bs4 import BeautifulSoup  # pip install beautifulsoup4
-from datetime import datetime, timedelta
 import dateutil.parser
 
-SERIEN_URL = "https://www.serienjunkies.de/docs/serienplaner.html"
-FILME_URL = "https://www.videobuster.de/top-dvd-verleih-30-tage.php?pospage=1&search_title&tab_search_content=movies&view=9&wrapped=100#titlelist_head"
 POSTGRES_USER = os.getenv('POSTGRES_USER', "root")
 POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', "postgres")
 POSTGRES_HOST = os.getenv('POSTGRES_HOST', "localhost")
@@ -21,121 +21,132 @@ POSTGRES_PORT = os.getenv('POSTGRES_PORT', "5432")
 POSTGRES_DATABASE = os.getenv('POSTGRES_DB', "postgres")
 
 
-def debug_print(title, objs):
-    if not isinstance(objs, list):
-        objs = [objs]
-    for idx, obj in enumerate(objs):
-        debug_txt = str(obj).replace("\n", " ")
-        while "  " in debug_txt:
-            debug_txt = debug_txt.replace("  ", " ")
-        print(title, idx, ":", debug_txt)
+class VideoBuster():
 
+    FILME_FETCH_URL = "https://www.videobuster.de/top-dvd-verleih-30-tage.php?pospage=1&search_title&tab_search_content=movies&view=9&wrapped=100#titlelist_head"
 
-def fetch_serien(debug = False) -> list:
-    logger = logging.getLogger("serien")
-    locale.setlocale(locale.LC_TIME, ("de_DE", "UTF8"))
-    html_text = BeautifulSoup(requests.get(SERIEN_URL).text, 'html.parser')
+    def __init__(self, debug=False):
+        self.debug = debug
 
-    database = list()
-    tablerows = html_text.findAll('div', {'class':'tablerow'})
-    for tablerow in tablerows:
-        if debug:
-            print("")
-            print("="*80)
-            debug_print("tablerow", tablerow)
-        try:
-            tablecels = tablerow.findAll('div', {'class':'tablecell'})
-            if debug:
-                debug_print("tablecels", tablecels)
-            if len(tablecels) != 3:
-                continue
-            title = tablecels[1].findAll('p')
+    def fetch_movies(self) -> list:
+        locale.setlocale(locale.LC_TIME, "de_DE.utf8")
+        html_text = BeautifulSoup(requests.get(VideoBuster.FILME_FETCH_URL).text, 'html.parser')
 
-            if len(title) == 0:
-                continue
-
-            title = title[0].text.strip()
-            if debug:
-                print("title:", title)
-            season = tablecels[1].findAll('a')[0].attrs['href'].split("/")[-1].replace(".html", "").replace("season", "").encode("ascii", "ignore").decode()
-            if season == "":
-                logger.warning("Season is empty for %s", title)
-                season = "0"
-
-            if not season.isnumeric():
-                logger.warning("Season '%s' is not an Season number for %s", season, title)
-                season = "0"
-
-            if debug:
-                print("season:", season)
-            date = tablecels[1].findAll('div')[0].text.replace("Serienstart", "").strip()
-
-            if "Morgen" in date:
-                date = (datetime.now() + timedelta(1)).date()
-            elif "Heute" in date:
-                date = datetime.now().date()
-            elif "Übermorgen" in date:
-                date = (datetime.now() + timedelta(2)).date()
-            else:
-                date = date.split("  ", 2)[0]
-                for x in ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]:
-                    date = date.replace(x, "")
-                for idx, x in enumerate(["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "Oktober", "November", "Dezember"]):
-                    date = date.replace(x, str(idx+1))
-                date = date.replace(",", "")
-                date = date.strip()
-                if debug:
-                    print("date:", date)
-                date = dateutil.parser.parse(date)
-
+        database = list()
+        tablerows = html_text.findAll('div', {'class':'detail-col'})
+        for tablerow in tablerows:
             try:
-                sender = tablecels[2].findAll('a')[0].attrs['href'].replace("/sender/", "").replace("/", "")
+                title_obj = tablerow.find('a')
+                title_long_obj = tablerow.find('div', {'class': 'long-name'})
+                movie_id = title_obj.attrs['href'].replace('/dvd-bluray-verleih/', '')
+                title = title_obj.text
+                title_long = title if title_long_obj is None else title_long_obj.text
+                date = datetime.datetime.now().date()
+
+                database.append({
+                        'id': movie_id,
+                        'title': title,
+                        'longTitle': title_long,
+                        'date': date,
+                        })
+
             except:
-                sender = "unknown"
+                traceback.print_exc()
 
-            if debug:
-                print("sender:", sender)
-
-            database.append({
-                    'title': title.encode("ascii", "ignore").decode(),
-                    'season': season.encode("ascii", "ignore").decode(),
-                    'date': date,
-                    'sender': sender.encode("ascii", "ignore").decode()
-                    })
-        except:
-            try: debug_print("tablerow", tablerow)
-            except: pass
-            traceback.print_exc()
-
-    return database
+        return database
 
 
-def fetch_movies(debug = False) -> list:
-    locale.setlocale(locale.LC_TIME, "de_DE.utf8")
-    html_text = BeautifulSoup(requests.get(FILME_URL).text, 'html.parser')
+class TheMovieDb:
 
-    database = list()
-    tablerows = html_text.findAll('div', {'class':'detail-col'})
-    for tablerow in tablerows:
+    def __init__(self, api_key, debug = False):
+        self.logger = logging.getLogger('TheMovieDb')
+        self.debug = debug
+        self.api_key = api_key
+
+
+    def rate_limit_protection(self):
+        time.sleep(1)
+
+
+    def fetch(self, url):
+        headers = {
+            "accept": "application/json"
+        }
+        self.rate_limit_protection()
+        self.logger.debug("request url: %s", url)
+        response = requests.get(url, headers=headers)
+        return response.json()
+
+
+    def fetch_discover_tv_full(self, page=1, air_date_gte="default"):
+        default_air_date_gte = (datetime.datetime.now() - datetime.timedelta(days=31)).strftime("%Y-%m-%d")
+        url = f"https://api.themoviedb.org/3/discover/tv?api_key={self.api_key}"
+        url += "&air_date.gte={}".format(default_air_date_gte if air_date_gte == "default" else air_date_gte)
+        url += "&include_adult=true"
+        url += "&include_null_first_air_dates=false"
+        url += "&language=de-DE"
+        url += f"&page={page}"
+        url += "&sort_by=popularity.desc"
+        url += "&vote_average.gte=7"
+        url += "&vote_count.gte=20"
+        url += "&watch_region=DE"
+        url += "&without_genres=16,37"
+        url += "&with_watch_providers=8|9|337|350|2|30|29|10"
+        return self.fetch(url)
+
+
+    def fetch_discover_tv_relevant(self, page=1, air_date_gte="default"):
+        result = self.fetch_discover_tv_full(page, air_date_gte)
+        return [{'id': x['id'], 'name': x['name'], 'genre': x['genre_ids']} for x in result["results"]]
+
+
+    def fetch_tv_full(self, series_id):
+        url = f"https://api.themoviedb.org/3/tv/{series_id}?language=de-DE&api_key={self.api_key}"
+        return self.fetch(url)
+
+
+    def fetch_tv_relevant(self, series_id):
+        data = self.fetch_tv_full(series_id)
         try:
-            title_obj = tablerow.find('a')
-            title_long_obj = tablerow.find('div', {'class': 'long-name'})
-            movie_id = title_obj.attrs['href'].replace('/dvd-bluray-verleih/', '')
-            title = title_obj.text
-            title_long = title if title_long_obj is None else title_long_obj.text
-            date = datetime.now().date()
+            last_air_date = dateutil.parser.parse(data["last_air_date"])
+            active = (datetime.datetime.now() - datetime.timedelta(days=7)) <= last_air_date
+            result = {
+                "id": data["id"],
+                "name": data["name"],
+                "in_production": data["in_production"],
+                "active": data["next_episode_to_air"] is not None or active,
+                "last_episode": data["last_episode_to_air"]["episode_number"],
+                "last_season": data["last_episode_to_air"]["season_number"],
+                "last_air_date": data["last_air_date"],
+                "number_of_seasons": data["number_of_seasons"],
+                "status": data["status"],
+                "vote_average": data["vote_average"]
+            }
+        except Exception as ex:
+            self.logger.exception(ex)
+            self.logger.info("content: %s", str(data))
+            result = {}
 
-            database.append({
-                    'id': movie_id,
-                    'title': title,
-                    'longTitle': title_long,
-                    'date': date,
-                    })
+        return result
 
+
+    def fetch_completed_series_seasons(self, search_pages = 3):
+        result = []
+        try:
+            for page in range(1,search_pages+1):
+                for item in self.fetch_discover_tv_relevant(page):
+                    data = self.fetch_tv_relevant(item['id'])
+                    if not data["active"]:
+                        result.append({
+                            "id": str(data["id"]) + "-" + str(data["last_season"]),
+                            "name": data["name"],
+                            "season": data["last_season"],
+                            "date": data["last_air_date"]
+                        })
         except:
             traceback.print_exc()
 
-    return database
+        return result
 
 
 class DebugDatabase():
@@ -199,7 +210,6 @@ class Database:
             TITLE           TEXT    NOT NULL,
             SEASON          INT     NOT NULL,
             DATE            DATE    NOT NULL,
-            SENDER          TEXT    NOT NULL,
             STATE           TEXT    NOT NULL
             ); '''
 
@@ -221,10 +231,9 @@ class Database:
 
     def insert_serie(self, data):
         data["title"] = data["title"].replace("'",'')
-        table_id = data["title"] + ' - Season ' + str(data["season"])
         sql = f'''INSERT INTO SERIEN
-            (ID,TITLE,SEASON,DATE,SENDER,STATE)
-            VALUES('{table_id}','{data['title']}',{data['season']},'{data['date']}','{data['sender']}','New')
+            (ID,TITLE,SEASON,DATE,STATE)
+            VALUES('{data['id']}','{data['title']}',{data['season']},'{data['date']}','New')
             ON CONFLICT DO NOTHING'''
         self.logger.debug('sql: %s', sql)
         self.cursor.execute(sql)
@@ -256,17 +265,26 @@ if __name__ == "__main__":
 
     db = DebugDatabase() if args.debug else Database()
 
+
+    the_movei_db_api_key = os.getenv('THE_MOVIE_DB_API_KEY', "")
+    if the_movei_db_api_key == "":
+        print("env var THE_MOVIE_DB_API_KEY missing")
+        time.sleep(1)
+        sys.exit(1)
+
+    video_buster = VideoBuster(args.debug)
     if not args.skip_movies:
         logger.info("fetch new movies")
-        movies = fetch_movies(args.debug)
+        movies = video_buster.fetch_movies()
         for movie in movies:
             db.insert_movie(movie)
 
-    # if not args.skip_serien:
-    #     logger.info("fetch new serien")
-    #     serien = fetch_serien(args.debug)
-    #     for serie in serien:
-    #         db.insert_serie(serie)
+    the_movide_db = TheMovieDb(the_movei_db_api_key, args.debug)
+    if not args.skip_serien:
+        logger.info("fetch new serien")
+        serien = the_movide_db.fetch_completed_series_seasons()
+        for serie in serien:
+            db.insert_serie(serie)
 
     db.commit()
     logger.info("movies and serien data crawler completed")
