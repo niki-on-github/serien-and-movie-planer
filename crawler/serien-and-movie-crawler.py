@@ -266,8 +266,8 @@ if __name__ == "__main__":
     db = DebugDatabase() if args.debug else Database()
 
 
-    the_movei_db_api_key = os.getenv('THE_MOVIE_DB_API_KEY', "")
-    if the_movei_db_api_key == "":
+    the_movie_db_api_key = os.getenv('THE_MOVIE_DB_API_KEY', "")
+    if the_movie_db_api_key == "":
         print("env var THE_MOVIE_DB_API_KEY missing")
         time.sleep(1)
         sys.exit(1)
@@ -279,7 +279,7 @@ if __name__ == "__main__":
         for movie in movies:
             db.insert_movie(movie)
 
-    the_movide_db = TheMovieDb(the_movei_db_api_key, args.debug)
+    the_movide_db = TheMovieDb(the_movie_db_api_key, args.debug)
     if not args.skip_serien:
         logger.info("fetch new serien")
         serien = the_movide_db.fetch_completed_series_seasons()
