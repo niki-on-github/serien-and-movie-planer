@@ -89,7 +89,7 @@ const theme = createTheme();
             display="flex"
             justifyContent="center"
             alignItems="center"
-            sx={{ flexGrow: 1, mt: 1, mb: 1, ml: -1 }}
+            sx={{ flexGrow: 1, mt: 2, mb: 1, ml: -1 }}
           >
             <Avatar src="logo.png" sx={{ width: 90, height: 90 }} />
           </Box>
