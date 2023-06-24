@@ -48,7 +48,7 @@ export default function Serien() {
 
         <Column dataField="title" caption="Title" dataType="string" />
         <Column dataField="season" caption="Season" dataType="number" />
-        <Column dataField="date" caption="Date" dataType="date" />
+        <Column dataField="date" caption="Date" dataType="date" format="yyyy-MM-dd" />
         <Column
           dataField="state"
           caption="State"

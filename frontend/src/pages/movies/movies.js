@@ -47,7 +47,7 @@ export default function Movies() {
         />
         <Column dataField="title" caption="Title" dataType="string" />
         <Column dataField="longTitle" caption="Long Title" dataType="string" />
-        <Column dataField="date" caption="Date" dataType="date" />
+        <Column dataField="date" caption="Date" dataType="date" format="yyyy-MM-dd" />
         <Column
           dataField="state"
           caption="State"
