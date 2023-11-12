@@ -5,7 +5,7 @@ RUN npm install
 COPY frontend/ .
 RUN npm run build
 
-FROM rust:1.67.0 as builder-backend
+FROM rust:1.70.0 as builder-backend
 WORKDIR /usr/src/app
 COPY . .
 RUN cargo install --path .
