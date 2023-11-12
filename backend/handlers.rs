@@ -36,10 +36,11 @@ async fn get_postgress_connection() -> Result<
 > {
     let user = std::env::var("POSTGRES_USER").unwrap_or(DEFAULT_POSTGRES_USER.to_string());
     let pw = std::env::var("POSTGRES_PASSWORD").unwrap_or(DEFAULT_POSTGRES_PASSWORD.to_string());
+    let pw_encoded =  urlencoding::encode(&pw);
     let host = std::env::var("POSTGRES_HOST").unwrap_or(DEFAULT_POSTGRES_HOST.to_string());
     let port = std::env::var("POSTGRES_PORT").unwrap_or(DEFAULT_POSTGRES_PORT.to_string());
     let db = std::env::var("POSTGRES_DB").unwrap_or(DEFAULT_POSTGRES_DATABASE.to_string());
-    let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", user, pw, host, port, db);
+    let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", user, pw_encoded, host, port, db);
     tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await
 }
 
