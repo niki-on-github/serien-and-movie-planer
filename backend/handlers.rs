@@ -40,8 +40,16 @@ async fn get_postgress_connection() -> Result<
     let host = std::env::var("POSTGRES_HOST").unwrap_or(DEFAULT_POSTGRES_HOST.to_string());
     let port = std::env::var("POSTGRES_PORT").unwrap_or(DEFAULT_POSTGRES_PORT.to_string());
     let db = std::env::var("POSTGRES_DB").unwrap_or(DEFAULT_POSTGRES_DATABASE.to_string());
-    let connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", user, pw_encoded, host, port, db);
-    tokio_postgres::connect(connect_uri.as_str().as_ref(), tokio_postgres::NoTls).await
+    let _connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", user, pw_encoded, host, port, db);
+
+    tokio_postgres::Config::new()
+    .host(&host)
+    .user(&user)
+    .port(port.parse().unwrap_or(5432))
+    .password(&pw)
+    .dbname(&db)
+    .connect(tokio_postgres::NoTls)
+    .await    
 }
 
 #[put("/api/v1/movies/update")]
