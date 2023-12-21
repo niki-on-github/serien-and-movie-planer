@@ -1,8 +1,8 @@
 use actix_files::Files;
-use actix_web::{get, put, web, HttpResponse, Responder};
+use actix_web::{get, post, put, web, HttpResponse, Responder};
 use serde_json::json;
 extern crate chrono;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_json::Number;
 use std::path::Path;
@@ -36,20 +36,23 @@ async fn get_postgress_connection() -> Result<
 > {
     let user = std::env::var("POSTGRES_USER").unwrap_or(DEFAULT_POSTGRES_USER.to_string());
     let pw = std::env::var("POSTGRES_PASSWORD").unwrap_or(DEFAULT_POSTGRES_PASSWORD.to_string());
-    let pw_encoded =  urlencoding::encode(&pw);
+    let pw_encoded = urlencoding::encode(&pw);
     let host = std::env::var("POSTGRES_HOST").unwrap_or(DEFAULT_POSTGRES_HOST.to_string());
     let port = std::env::var("POSTGRES_PORT").unwrap_or(DEFAULT_POSTGRES_PORT.to_string());
     let db = std::env::var("POSTGRES_DB").unwrap_or(DEFAULT_POSTGRES_DATABASE.to_string());
-    let _connect_uri: String = format!("postgresql://{}:{}@{}:{}/{}", user, pw_encoded, host, port, db);
+    let _connect_uri: String = format!(
+        "postgresql://{}:{}@{}:{}/{}",
+        user, pw_encoded, host, port, db
+    );
 
     tokio_postgres::Config::new()
-    .host(&host)
-    .user(&user)
-    .port(port.parse().unwrap_or(5432))
-    .password(&pw)
-    .dbname(&db)
-    .connect(tokio_postgres::NoTls)
-    .await    
+        .host(&host)
+        .user(&user)
+        .port(port.parse().unwrap_or(5432))
+        .password(&pw)
+        .dbname(&db)
+        .connect(tokio_postgres::NoTls)
+        .await
 }
 
 #[put("/api/v1/movies/update")]
@@ -253,4 +256,115 @@ async fn get_movies_count() -> impl Responder {
     }
 
     json!(map).to_string()
+}
+
+#[get("/api/v1/export")]
+async fn get_export() -> impl Responder {
+    let (client, conn) = match get_postgress_connection().await {
+        Ok(c) => c,
+        Err(e) => {
+            return json!({
+                "error": e.to_string()
+            })
+            .to_string();
+        }
+    };
+
+    tokio::spawn(async move {
+        if let Err(e) = conn.await {
+            panic!("{}", e.to_string());
+        }
+    });
+
+    let mut serien: Vec<serde_json::Value> = Vec::new();
+    for row in client
+        .query("SELECT ID,TITLE,SEASON,DATE,STATE FROM SERIEN", &[])
+        .await
+        .unwrap_or(Vec::new())
+    {
+        serien.push(json!({
+                "id": row.get::<usize, &str>(0),
+                "title": row.get::<usize, &str>(1),
+                "season": row.get::<usize, i32>(2),
+                "date": row.get::<usize, chrono::NaiveDate>(3).format("%Y-%m-%d").to_string(),
+                "state": row.get::<usize, &str>(4),
+        }));
+    }
+
+    let mut movies: Vec<serde_json::Value> = Vec::new();
+    for row in client
+        .query("SELECT ID,TITLE,LONG_TITLE,DATE,STATE FROM MOVIES", &[])
+        .await
+        .unwrap_or(Vec::new())
+    {
+        movies.push(json!({
+                "id": row.get::<usize, i32>(0),
+                "title": row.get::<usize, &str>(1),
+                "longTitle": row.get::<usize, &str>(2),
+                "date": row.get::<usize, chrono::NaiveDate>(3).format("%Y-%m-%d").to_string(),
+                "state": row.get::<usize, &str>(4),
+        }));
+    }
+
+    json!({
+        "serien": serien,
+        "movies": movies
+    })
+    .to_string()
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ImportDto {
+    pub serien: Vec<serde_json::Value>,
+    pub movies: Vec<serde_json::Value>,
+}
+
+#[post("/api/v1/import")]
+async fn post_import(body: web::Json<ImportDto>) -> impl Responder {
+    let (client, conn) = match get_postgress_connection().await {
+        Ok(c) => c,
+        Err(_e) => return HttpResponse::Created().finish(),
+    };
+
+    tokio::spawn(async move {
+        if let Err(e) = conn.await {
+            panic!("{}", e.to_string());
+        }
+    });
+
+    client.execute("DELETE FROM SERIEN;", &[]).await.unwrap();
+
+    client.execute("DELETE FROM MOVIES;", &[]).await.unwrap();
+
+    for s in &body.serien {
+        client
+            .execute(
+                "INSERT INTO SERIEN (ID,TITLE,SEASON,DATE,STATE) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING;",
+                &[&serde_json::from_value::<String>(s["id"].clone()).unwrap(), 
+                    &serde_json::from_value::<String>(s["title"].clone()).unwrap(), 
+                    &serde_json::from_value::<i32>(s["season"].clone()).unwrap(),
+                    &chrono::NaiveDate::parse_from_str(&serde_json::from_value::<String>(s["date"].clone()).unwrap(), "%Y-%m-%d").unwrap(), 
+                    &serde_json::from_value::<String>(s["state"].clone()).unwrap()
+                ],
+            )
+            .await
+            .unwrap();
+    }
+
+    for m in &body.movies {
+        client
+            .execute(
+                "INSERT INTO MOVIES (ID,TITLE,LONG_TITLE,DATE,STATE) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING;",
+                &[&serde_json::from_value::<String>(m["id"].clone()).unwrap(), 
+                    &serde_json::from_value::<String>(m["title"].clone()).unwrap(), 
+                    &serde_json::from_value::<String>(m["longTitle"].clone()).unwrap(),
+                    &chrono::NaiveDate::parse_from_str(&serde_json::from_value::<String>(m["date"].clone()).unwrap(), "%Y-%m-%d").unwrap(), 
+                    &serde_json::from_value::<String>(m["state"].clone()).unwrap()
+                ],
+            )
+            .await
+            .unwrap();
+    }
+
+    HttpResponse::Created().finish()
 }
