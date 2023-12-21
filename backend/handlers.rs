@@ -355,7 +355,7 @@ async fn post_import(body: web::Json<ImportDto>) -> impl Responder {
         client
             .execute(
                 "INSERT INTO MOVIES (ID,TITLE,LONG_TITLE,DATE,STATE) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING;",
-                &[&serde_json::from_value::<String>(m["id"].clone()).unwrap(), 
+                &[&serde_json::from_value::<i32>(m["id"].clone()).unwrap(), 
                     &serde_json::from_value::<String>(m["title"].clone()).unwrap(), 
                     &serde_json::from_value::<String>(m["longTitle"].clone()).unwrap(),
                     &chrono::NaiveDate::parse_from_str(&serde_json::from_value::<String>(m["date"].clone()).unwrap(), "%Y-%m-%d").unwrap(), 

@@ -39,7 +39,7 @@ export default function Home() {
             <ListItem
               secondaryAction={
                 <Button variant="outlined" onClick={() => {
-                  window.open(window.location.protocol + '//' + window.location.hostname + "/api/v1/export", "_blank").focus();
+                  window.open(window.location.protocol + '//' + window.location.hostname + ":" + window.location.port + "/api/v1/export", "_blank").focus();
                 }}>Export</Button>
 
               }
