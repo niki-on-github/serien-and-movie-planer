@@ -22,7 +22,7 @@
           ];
           rust-toolchain = pkgs.symlinkJoin {
             name = "rust-toolchain";
-            paths = [ pkgs.rustc pkgs.cargo pkgs.cargo-watch pkgs.rust-analyzer pkgs.rustPlatform.rustcSrc ];
+            paths = [ pkgs.rustc pkgs.cargo pkgs.cargo-watch pkgs.rust-analyzer pkgs.rustPlatform.rustcSrc pkgs.nodejs ];
           };
         in
         {
@@ -41,10 +41,6 @@
             shellHook = ''
               # For rust-analyzer 'hover' tooltips to work.
               export RUST_SRC_PATH=${pkgs.rustPlatform.rustLibSrc}
-
-              echo
-              echo "🍎🍎 Run 'just <recipe>' to get started"
-              just
             '';
             buildInputs = nonRustDeps;
             nativeBuildInputs = with pkgs; [
