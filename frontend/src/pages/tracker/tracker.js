@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Stack from "@mui/material/Stack";
+import Snackbar from "@mui/material/Snackbar";
 import Button from '@mui/material/Button';
 import TextField from "@mui/material/TextField";
 import DataGrid, {
@@ -24,6 +25,7 @@ const store = createStore({
 export default function Tracker() {
   const [integerValue, setIntegerValue] = useState('');
   const [error, setError] = useState('');
+  const [openSnackbar, setOpenSnackbar] = React.useState(false);
 
   const handleChange = (event) => {
     const value = event.target.value;
@@ -33,6 +35,18 @@ export default function Tracker() {
     } else {
       setError('Please enter a valid integer');
     }
+  };
+
+
+  const handleCloseSnackbar = (
+    event,
+    reason,
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpenSnackbar(false);
   };
 
   const handleSubmit = async (event) => {
@@ -50,6 +64,7 @@ export default function Tracker() {
 
         if (response.ok) {
           setIntegerValue('');
+           setOpenSnackbar(true);
         } else {
           throw new Error('Server responded with an error');
         }
@@ -62,6 +77,12 @@ export default function Tracker() {
 
   return (
   <>
+      <Snackbar
+      open={openSnackbar}
+      autoHideDuration={6000}
+      onClose={handleCloseSnackbar}
+      message="ID will be tracked at next crawler run"
+    />
     <Stack>
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: 'flex', alignItems: 'center', m: 2, mb:0 }} spacing={2}>
