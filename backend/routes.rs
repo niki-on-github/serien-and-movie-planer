@@ -7,7 +7,10 @@ pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(handlers::get_movies);
     cfg.service(handlers::put_movies);
     cfg.service(handlers::get_serien);
+    cfg.service(handlers::get_track);
     cfg.service(handlers::put_serien);
+    cfg.service(handlers::put_track);
+    cfg.service(handlers::post_track);
     cfg.service(handlers::get_export);
     cfg.service(handlers::post_import);
     cfg.service(handlers::index());

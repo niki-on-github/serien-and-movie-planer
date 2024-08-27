@@ -19,6 +19,11 @@ struct Response {
     values: String,
 }
 
+#[derive(Deserialize)]
+struct AddTrackerResponse {
+    value: i32,
+}
+
 pub fn index() -> Files {
     if Path::new("/frontend/build").exists() {
         Files::new("/", "/frontend/build/").index_file("index.html")
@@ -120,6 +125,74 @@ async fn put_serien(body: web::Form<Response>) -> impl Responder {
     HttpResponse::Created().finish()
 }
 
+#[put("/api/v1/track/update")]
+async fn put_track(body: web::Form<Response>) -> impl Responder {
+    let values_json: serde_json::Value = serde_json::from_str(body.values.as_str()).unwrap();
+    let (client, conn) = match get_postgress_connection().await {
+        Ok(c) => c,
+        Err(_e) => return HttpResponse::Created().finish(),
+    };
+
+    tokio::spawn(async move {
+        if let Err(e) = conn.await {
+            panic!("{}", e.to_string());
+        }
+    });
+
+    let state: String = match &values_json["state"].clone() {
+        serde_json::Value::String(s) => s.to_string(),
+        _ => "".to_string(),
+    };
+
+    if !state.is_empty() {
+        client
+            .execute(
+                "UPDATE TRACK SET STATE = $2 WHERE ID = $1 RETURNING *;",
+                &[&body.key, &state],
+            )
+            .await
+            .unwrap();
+    }
+
+    HttpResponse::Created().finish()
+}
+
+#[post("/api/v1/track/add")]
+async fn post_track(body: web::Json<AddTrackerResponse>) -> impl Responder {
+    println!("add {}", body.value);
+    let (client, conn) = match get_postgress_connection().await {
+        Ok(c) => c,
+        Err(_e) => return HttpResponse::InternalServerError().finish(),
+    };
+
+    tokio::spawn(async move {
+        if let Err(e) = conn.await {
+            panic!("{}", e.to_string());
+        }
+    });
+
+
+    if body.value != 0 {
+        client
+            .execute(
+                "CREATE TABLE IF NOT EXISTS TRACKID (ID INT PRIMARY KEY NOT NULL);",
+                &[],
+            )
+            .await
+            .unwrap();
+
+        client
+            .execute(
+                "INSERT INTO TRACKID (ID) VALUES($1) ON CONFLICT DO NOTHING;",
+                &[&body.value],
+            )
+            .await
+            .unwrap();
+    }
+
+    HttpResponse::Created().finish()
+}
+
 #[get("/api/v1/movies")]
 async fn get_movies() -> impl Responder {
     let (client, conn) = match get_postgress_connection().await {
@@ -177,6 +250,42 @@ async fn get_serien() -> impl Responder {
     let mut serien: Vec<serde_json::Value> = Vec::new();
     for row in client
         .query("SELECT ID,TITLE,SEASON,DATE,STATE FROM SERIEN", &[])
+        .await
+        .unwrap_or(Vec::new())
+    {
+        serien.push(json!({
+                "id": row.get::<usize, &str>(0),
+                "title": row.get::<usize, &str>(1),
+                "season": row.get::<usize, i32>(2),
+                "date": row.get::<usize, chrono::NaiveDate>(3).format("%Y-%m-%d").to_string(),
+                "state": row.get::<usize, &str>(4),
+        }));
+    }
+
+    json!(serien).to_string()
+}
+
+#[get("/api/v1/track")]
+async fn get_track() -> impl Responder {
+    let (client, conn) = match get_postgress_connection().await {
+        Ok(c) => c,
+        Err(e) => {
+            return json!({
+                "error": e.to_string()
+            })
+            .to_string();
+        }
+    };
+
+    tokio::spawn(async move {
+        if let Err(e) = conn.await {
+            panic!("{}", e.to_string());
+        }
+    });
+
+    let mut serien: Vec<serde_json::Value> = Vec::new();
+    for row in client
+        .query("SELECT ID,TITLE,SEASON,DATE,STATE FROM TRACK", &[])
         .await
         .unwrap_or(Vec::new())
     {
