@@ -149,6 +149,24 @@ class TheMovieDb:
         return result
 
 
+    def fetch_series_by_ids(self, ids: list):
+        result = []
+        try:
+            for id in ids:
+                data = self.fetch_tv_relevant(id)
+                if "active" in data and not data["active"]:
+                    result.append({
+                        "id": str(data["id"]) + "-" + str(data["last_season"]),
+                        "title": data["name"],
+                        "season": data["last_season"],
+                        "date": data["last_air_date"]
+                    })
+        except:
+            traceback.print_exc()
+
+        return result
+
+
 class DebugDatabase():
 
     def __ini__(self):
@@ -162,6 +180,12 @@ class DebugDatabase():
 
     def insert_movie(self, data):
         print("insert", data)
+
+    def insert_track(self, data):
+        print("insert", data)
+
+    def get_track_ids(self):
+        return []
 
 
 class Database:
@@ -180,6 +204,7 @@ class Database:
 
         self.__create_movie_table_if_not_exists()
         self.__create_serien_table_if_not_exists()
+        self.__create_track_table_if_not_exists()
 
 
     def __del__(self):
@@ -216,6 +241,17 @@ class Database:
         self.cursor.execute(create_serien_table_query)
         self.connection.commit()
 
+    def __create_tracking_table_if_not_exists(self):
+        create_track_table_query = '''CREATE TABLE IF NOT EXISTS TRACK
+            (ID TEXT PRIMARY KEY    NOT NULL,
+            TITLE           TEXT    NOT NULL,
+            SEASON          INT     NOT NULL,
+            DATE            DATE    NOT NULL,
+            STATE           TEXT    NOT NULL
+            ); '''
+
+        self.cursor.execute(create_track_table_query)
+        self.connection.commit()
 
     def insert_movie(self, data):
         data['title'] = data['title'].replace("'",'')
@@ -228,7 +264,6 @@ class Database:
         self.logger.debug('sql: %s', sql)
         self.cursor.execute(sql)
 
-
     def insert_serie(self, data):
         data["title"] = data["title"].replace("'",'')
         sql = f'''INSERT INTO SERIEN
@@ -238,6 +273,33 @@ class Database:
         self.logger.debug('sql: %s', sql)
         self.cursor.execute(sql)
 
+    def insert_track(self, data):
+        data["title"] = data["title"].replace("'",'')
+        sql = f'''INSERT INTO TRACK
+            (ID,TITLE,SEASON,DATE,STATE)
+            VALUES('{data['id']}','{data['title']}',{data['season']},'{data['date']}','New')
+            ON CONFLICT DO NOTHING'''
+        self.logger.debug('sql: %s', sql)
+        self.cursor.execute(sql)
+
+    def table_exists(self, table_name):
+        self.cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public'
+                AND table_name = %s
+            );
+        """, (table_name,))
+        result = self.cursor.fetchone() 
+        return False if result is None else result[0]
+
+    def get_track_ids(self):
+        if not self.table_exists("TRACKID"):
+            print("No trackid table available")
+            return []
+        self.cursor.execute("SELECT ID FROM TRACKID")
+        ids = self.cursor.fetchall()
+        return ids
 
     def commit(self):
         self.connection.commit()
@@ -261,6 +323,7 @@ if __name__ == "__main__":
     parser.add_argument('--debug', action='store_true', help="use debug mode")
     parser.add_argument('--skip-movies', action='store_true', help="skip fetch movies")
     parser.add_argument('--skip-serien', action='store_true', help="skip fetch serien")
+    parser.add_argument('--skip-track', action='store_true', help="skip fetch track infos")
     args = parser.parse_args()
 
     db = DebugDatabase() if args.debug else Database()
@@ -292,6 +355,14 @@ if __name__ == "__main__":
             except Exception as ex:
                 logger.exception(ex)
 
+    if not args.skip_track:
+        logger.info("fetch new track infos")
+        serien = the_movide_db.fetch_series_by_ids(db.get_track_ids())
+        for serie in serien:
+            try:
+                db.insert_track(serie)
+            except Exception as ex:
+                logger.exception(ex)
 
     db.commit()
     logger.info("movies and serien data crawler completed")

@@ -22,7 +22,19 @@
           ];
           rust-toolchain = pkgs.symlinkJoin {
             name = "rust-toolchain";
-            paths = [ pkgs.rustc pkgs.cargo pkgs.cargo-watch pkgs.rust-analyzer pkgs.rustPlatform.rustcSrc pkgs.nodejs ];
+            paths = [ 
+              pkgs.rustc 
+              pkgs.cargo 
+              pkgs.cargo-watch 
+              pkgs.rust-analyzer 
+              pkgs.rustPlatform.rustcSrc 
+              pkgs.nodejs
+              pkgs.python310Packages.requests
+              pkgs.python310Packages.beautifulsoup4
+              pkgs.python310Packages.psycopg2
+              pkgs.python310Packages.python-dateutil
+              pkgs.python310Packages.six
+            ];
           };
         in
         {
