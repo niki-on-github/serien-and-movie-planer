@@ -205,7 +205,7 @@ class Database:
 
         self.__create_movie_table_if_not_exists()
         self.__create_serien_table_if_not_exists()
-        self.__create_track_table_if_not_exists()
+        self.__create_tracking_table_if_not_exists()
 
 
     def __del__(self):
@@ -283,23 +283,13 @@ class Database:
         self.logger.debug('sql: %s', sql)
         self.cursor.execute(sql)
 
-    def table_exists(self, table_name):
-        self.cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public'
-                AND table_name = %s
-            );
-        """, (table_name,))
-        result = self.cursor.fetchone() 
-        return False if result is None else result[0]
-
     def get_track_ids(self):
-        if not self.table_exists("TRACKID"):
-            self.logger.info("No trackid table available")
-            return []
-        self.cursor.execute("SELECT ID FROM TRACKID")
-        ids = self.cursor.fetchall()
+        ids = []
+        try:
+            self.cursor.execute("SELECT ID FROM TRACKID")
+            ids = list(map(lambda x: x[0], self.cursor.fetchall()))
+        except:
+            traceback.print_exc()
         return ids
 
     def commit(self):
