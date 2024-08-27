@@ -152,6 +152,7 @@ class TheMovieDb:
     def fetch_series_by_ids(self, ids: list):
         result = []
         try:
+            print("fetch ids", ids)
             for id in ids:
                 data = self.fetch_tv_relevant(id)
                 if "active" in data and not data["active"]:
