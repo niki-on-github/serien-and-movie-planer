@@ -8,7 +8,7 @@ RUN npm run build
 FROM rust:1.72.0 as builder-backend
 WORKDIR /usr/src/app
 COPY . .
-RUN cargo install --path .
+RUN cargo install --locked --path .
 
 FROM debian:bookworm-slim
 COPY --from=builder-backend /usr/local/cargo/bin/serien-and-movie-planer /usr/local/bin/serien-and-movie-planer
