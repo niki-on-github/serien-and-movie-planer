@@ -152,7 +152,7 @@ class TheMovieDb:
     def fetch_series_by_ids(self, ids: list):
         result = []
         try:
-            print("fetch ids", ids)
+            self.logger.info("fetch ids %s", str(ids))
             for id in ids:
                 data = self.fetch_tv_relevant(id)
                 if "active" in data and not data["active"]:
@@ -296,7 +296,7 @@ class Database:
 
     def get_track_ids(self):
         if not self.table_exists("TRACKID"):
-            print("No trackid table available")
+            self.logger.info("No trackid table available")
             return []
         self.cursor.execute("SELECT ID FROM TRACKID")
         ids = self.cursor.fetchall()
