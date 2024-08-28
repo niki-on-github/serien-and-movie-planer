@@ -436,7 +436,7 @@ async fn get_export() -> impl Responder {
         .await
         .unwrap_or(Vec::new())
     {
-        track_ids.push(row.get::<usize, u32>(0));
+        track_ids.push(row.get::<usize, i32>(0));
     }
 
     json!({
