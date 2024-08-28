@@ -430,7 +430,7 @@ async fn get_export() -> impl Responder {
         }));
     }
 
-    let mut track_ids: Vec<u32> = Vec::new();
+    let mut track_ids: Vec<i32> = Vec::new();
     for row in client
         .query("SELECT ID FROM TRACKID", &[])
         .await
