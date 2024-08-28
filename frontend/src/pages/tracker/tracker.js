@@ -55,16 +55,16 @@ export default function Tracker() {
       console.log('Submitted integer:', integerValue);
       try {
         const response = await fetch('/api/v1/track/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ value: parseInt(integerValue, 10) }),
-      });
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ value: parseInt(integerValue, 10) }),
+        });
 
         if (response.ok) {
           setIntegerValue('');
-           setOpenSnackbar(true);
+          setOpenSnackbar(true);
         } else {
           throw new Error('Server responded with an error');
         }
@@ -76,69 +76,69 @@ export default function Tracker() {
   };
 
   return (
-  <>
+    <>
       <Snackbar
-      open={openSnackbar}
-      autoHideDuration={6000}
-      onClose={handleCloseSnackbar}
-      message="ID will be tracked at next crawler run"
-    />
-    <Stack>
-      <form onSubmit={handleSubmit}>
-        <Box sx={{ display: 'flex', alignItems: 'center', m: 2, mb:0 }} spacing={2}>
-          <TextField
-            fullWidth
-            label="Add new themoviedb tv show id"
-            variant="outlined"
-            value={integerValue}
-            onChange={handleChange}
-            error={error != ''}
-            helperText={error}
-            sx={{ mb: 2 }}
-          />
-          <Button
-            sx={{ ml: 1, mt: -2}}
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={error || integerValue === ''}
-          >
-            Add
-          </Button>
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        message="ID will be tracked at next crawler run"
+      />
+      <Stack>
+        <form onSubmit={handleSubmit}>
+          <Box sx={{ display: 'flex', alignItems: 'center', m: 2, mb: 0 }} spacing={2}>
+            <TextField
+              fullWidth
+              label="Add new themoviedb tv show id"
+              variant="outlined"
+              value={integerValue}
+              onChange={handleChange}
+              error={error != ''}
+              helperText={error}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              sx={{ ml: 1, mt: -2 }}
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={error || integerValue === ''}
+            >
+              Add
+            </Button>
           </Box>
         </form>
 
 
-    <Box sx={{ m: 2 }}>
-      <DataGrid
-        dataSource={store}
-        showBorders={true}
-        columnAutoWidth={true}
-        columnHidingEnabled={true}
-      >
-        <Pager showPageSizeSelector={true} showInfo={true} />
-        <FilterRow visible={true} />
-        <Editing
-          mode="cell"
-          allowUpdating={true}
-          allowAdding={false}
-          allowDeleting={false}
-        />
+        <Box sx={{ m: 2 }}>
+          <DataGrid
+            dataSource={store}
+            showBorders={true}
+            columnAutoWidth={true}
+            columnHidingEnabled={true}
+          >
+            <Pager showPageSizeSelector={true} showInfo={true} />
+            <FilterRow visible={true} />
+            <Editing
+              mode="cell"
+              allowUpdating={true}
+              allowAdding={false}
+              allowDeleting={false}
+            />
 
-        <Column dataField="title" caption="Title" dataType="string" />
-        <Column dataField="season" caption="Season" dataType="number" />
-        <Column dataField="date" caption="Date" dataType="date" format="yyyy-MM-dd" />
-        <Column
-          dataField="state"
-          caption="State"
-          dataType="string"
-          filterValue="New"
-        >
-          <Lookup dataSource={states} valueExpr="ID" displayExpr="Name" />
-        </Column>
-      </DataGrid>
-    </Box>
-    </Stack>
+            <Column dataField="title" caption="Title" dataType="string" />
+            <Column dataField="season" caption="Season" dataType="number" />
+            <Column dataField="date" caption="Date" dataType="date" format="yyyy-MM-dd" />
+            <Column
+              dataField="state"
+              caption="State"
+              dataType="string"
+              filterValue="New"
+            >
+              <Lookup dataSource={states} valueExpr="ID" displayExpr="Name" />
+            </Column>
+          </DataGrid>
+        </Box>
+      </Stack>
     </>
   );
 }

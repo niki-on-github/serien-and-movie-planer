@@ -267,9 +267,18 @@ class Database:
 
     def insert_serie(self, data):
         data["title"] = data["title"].replace("'",'')
+        self.cursor.execute("SELECT COUNT(*) FROM SERIEN WHERE TITLE = %s AND STATE = %s", (data["title"], "Ignore"))
+        try:
+            ignore_count = self.cursor.fetchone()[0]
+        except:
+            ignore_count = 0
+        state = 'New'
+        if ignore_count > 0:
+            state = 'Ignore'
+            self.logger.info(f"insert {data['title']} Season {data['season']} as ignore")
         sql = f'''INSERT INTO SERIEN
             (ID,TITLE,SEASON,DATE,STATE)
-            VALUES('{data['id']}','{data['title']}',{data['season']},'{data['date']}','New')
+            VALUES('{data['id']}','{data['title']}',{data['season']},'{data['date']}','{state}')
             ON CONFLICT DO NOTHING'''
         self.logger.debug('sql: %s', sql)
         self.cursor.execute(sql)
