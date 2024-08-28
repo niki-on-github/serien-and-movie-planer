@@ -400,6 +400,21 @@ async fn get_export() -> impl Responder {
         }));
     }
 
+    let mut track: Vec<serde_json::Value> = Vec::new();
+    for row in client
+        .query("SELECT ID,TITLE,SEASON,DATE,STATE FROM TRACK", &[])
+        .await
+        .unwrap_or(Vec::new())
+    {
+        track.push(json!({
+                "id": row.get::<usize, &str>(0),
+                "title": row.get::<usize, &str>(1),
+                "season": row.get::<usize, i32>(2),
+                "date": row.get::<usize, chrono::NaiveDate>(3).format("%Y-%m-%d").to_string(),
+                "state": row.get::<usize, &str>(4),
+        }));
+    }
+
     let mut movies: Vec<serde_json::Value> = Vec::new();
     for row in client
         .query("SELECT ID,TITLE,LONG_TITLE,DATE,STATE FROM MOVIES", &[])
@@ -415,9 +430,20 @@ async fn get_export() -> impl Responder {
         }));
     }
 
+    let mut track_ids: Vec<u32> = Vec::new();
+    for row in client
+        .query("SELECT ID FROM TRACKID", &[])
+        .await
+        .unwrap_or(Vec::new())
+    {
+        track_ids.push(row.get::<usize, u32>(0));
+    }
+
     json!({
         "serien": serien,
-        "movies": movies
+        "movies": movies,
+        "track": track,
+        "trackIds": track_ids
     })
     .to_string()
 }
@@ -426,6 +452,7 @@ async fn get_export() -> impl Responder {
 pub struct ImportDto {
     pub serien: Vec<serde_json::Value>,
     pub movies: Vec<serde_json::Value>,
+    pub track: Vec<serde_json::Value>,
 }
 
 #[post("/api/v1/import")]
@@ -442,6 +469,8 @@ async fn post_import(body: web::Json<ImportDto>) -> impl Responder {
     });
 
     client.execute("DELETE FROM SERIEN;", &[]).await.unwrap();
+    
+    client.execute("DELETE FROM TRACK;", &[]).await.unwrap();
 
     client.execute("DELETE FROM MOVIES;", &[]).await.unwrap();
 
@@ -449,6 +478,21 @@ async fn post_import(body: web::Json<ImportDto>) -> impl Responder {
         client
             .execute(
                 "INSERT INTO SERIEN (ID,TITLE,SEASON,DATE,STATE) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING;",
+                &[&serde_json::from_value::<String>(s["id"].clone()).unwrap(), 
+                    &serde_json::from_value::<String>(s["title"].clone()).unwrap(), 
+                    &serde_json::from_value::<i32>(s["season"].clone()).unwrap(),
+                    &chrono::NaiveDate::parse_from_str(&serde_json::from_value::<String>(s["date"].clone()).unwrap(), "%Y-%m-%d").unwrap(), 
+                    &serde_json::from_value::<String>(s["state"].clone()).unwrap()
+                ],
+            )
+            .await
+            .unwrap();
+    }
+
+    for s in &body.track {
+        client
+            .execute(
+                "INSERT INTO TRACK (ID,TITLE,SEASON,DATE,STATE) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING;",
                 &[&serde_json::from_value::<String>(s["id"].clone()).unwrap(), 
                     &serde_json::from_value::<String>(s["title"].clone()).unwrap(), 
                     &serde_json::from_value::<i32>(s["season"].clone()).unwrap(),
