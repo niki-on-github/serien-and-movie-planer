@@ -162,6 +162,14 @@ class TheMovieDb:
                         "season": data["last_season"],
                         "date": data["last_air_date"]
                     })
+                elif "last_season" in data and data["last_season"] > 1:
+                    # add previous episode to the db so we are able to see all tracked series
+                    result.append({
+                        "id": str(data["id"]) + "-" + str(data["last_season"] - 1),
+                        "title": data["name"],
+                        "season": data["last_season"] - 1,
+                        "date": data["last_air_date"] # use air date of current/next season to avaid refreshes
+                    })
         except:
             traceback.print_exc()
 
