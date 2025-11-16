@@ -6,7 +6,7 @@ ENV LANGUAGE de_DE.UTF-8
 
 RUN apt-get update \
     && apt-get install -y locales locales-all \
-    && pip install beautifulsoup4 python-dateutil requests psycopg2 --no-cache-dir \
+    && pip install beautifulsoup4 python-dateutil requests psycopg2-binary --no-cache-dir \
     && mkdir -p /app \
     && rm -rf /var/lib/apt/lists/*
 
