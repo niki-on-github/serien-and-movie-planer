@@ -1,9 +1,8 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 ENV LC_ALL de_DE.UTF-8
 ENV LANG de_DE.UTF-8
 ENV LANGUAGE de_DE.UTF-8
-ENV PYTHONDONTWRITEBYTECODE=1
 
 RUN apt-get update \
     && apt-get install -y locales locales-all \
