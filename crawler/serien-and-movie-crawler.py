@@ -33,7 +33,7 @@ class VideoBuster():
         html_text = BeautifulSoup(requests.get(VideoBuster.FILME_FETCH_URL).text, 'html.parser')
 
         database = list()
-        tablerows = html_text.findAll('div', {'class':'detail-col'})
+        tablerows = html_text.find_all('div', {'class':'detail-col'})
         for tablerow in tablerows:
             try:
                 title_obj = tablerow.find('a')
