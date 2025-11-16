@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DataGrid, {
   Pager,
   Button,
@@ -20,15 +20,24 @@ const store = createStore({
 });
 
 export default function Movies() {
+  const [searchPrefix, setSearchPrefix] = useState("https://www.youtube.com/results?search_query=");
+
+  useEffect(() => {
+    fetch("/api/v1/trailer/url")
+      .then((res) => res.json())
+      .then((data) => {
+        setSearchPrefix(data.prefix);
+      });
+  }, []);
+
   function openTrailer(e) {
     try {
-      var title = e.row.data.title;
-      var url =
-        "https://www.youtube.com/results?search_query=" +
-        encodeURIComponent(title + " trailer");
+      const title = e.row.data.title;
+      const url = searchPrefix + encodeURIComponent(title + " trailer");
       window.open(url, "_blank").focus();
     } catch {}
   }
+
   return (
     <Box sx={{ m: 2 }}>
       <DataGrid

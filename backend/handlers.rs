@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_json::Number;
 use std::path::Path;
+use std::env;
 
 const DEFAULT_POSTGRES_USER: &str = "root";
 const DEFAULT_POSTGRES_PASSWORD: &str = "postgres";
@@ -520,4 +521,9 @@ async fn post_import(body: web::Json<ImportDto>) -> impl Responder {
     }
 
     HttpResponse::Created().finish()
+}
+
+#[get("/api/v1/trailer/url")]
+async fn get_search_url() -> impl Responder {
+    env::var("TRAILER_SEARCH_URL").unwrap_or("https://www.youtube.com/results?search_query=".into())
 }

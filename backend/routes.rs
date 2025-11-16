@@ -13,5 +13,6 @@ pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(handlers::post_track);
     cfg.service(handlers::get_export);
     cfg.service(handlers::post_import);
+    cfg.service(handlers::get_search_url);
     cfg.service(handlers::index());
 }

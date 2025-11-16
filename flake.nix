@@ -29,11 +29,11 @@
               pkgs.rust-analyzer 
               pkgs.rustPlatform.rustcSrc 
               pkgs.nodejs
-              pkgs.python310Packages.requests
-              pkgs.python310Packages.beautifulsoup4
-              pkgs.python310Packages.psycopg2
-              pkgs.python310Packages.python-dateutil
-              pkgs.python310Packages.six
+              pkgs.python311Packages.requests
+              pkgs.python311Packages.beautifulsoup4
+              pkgs.python311Packages.psycopg2
+              pkgs.python311Packages.python-dateutil
+              pkgs.python311Packages.six
             ];
           };
         in

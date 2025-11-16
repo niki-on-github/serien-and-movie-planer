@@ -5,7 +5,7 @@ RUN npm install
 COPY frontend/ .
 RUN npm run build
 
-FROM rust:1.72.0 as builder-backend
+FROM rust:1.90.0 as builder-backend
 WORKDIR /usr/src/app
 COPY . .
 RUN cargo install --locked --path .
