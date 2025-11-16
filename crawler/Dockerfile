@@ -1,19 +1,15 @@
-FROM python:3.10
-
-RUN apt-get update
-RUN apt-get install -y locales locales-all
+FROM python:3.10-slim
 
 ENV LC_ALL de_DE.UTF-8
 ENV LANG de_DE.UTF-8
 ENV LANGUAGE de_DE.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1
 
-RUN pip install \
-    beautifulsoup4 \
-    python-dateutil \
-    requests \
-    psycopg2
-
-RUN mkdir -p /app
+RUN apt-get update \
+    && apt-get install -y locales locales-all \
+    && pip install beautifulsoup4 python-dateutil requests psycopg2 --no-cache-dir \
+    && mkdir -p /app \
+    && rm -rf /var/lib/apt/lists/*
 
 ADD ./entrypoint.sh /app
 ADD ./serien-and-movie-crawler.py /app
