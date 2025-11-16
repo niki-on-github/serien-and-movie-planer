@@ -23,11 +23,11 @@ export default function Serien() {
   const [searchPrefix, setSearchPrefix] = useState("https://www.youtube.com/results?search_query=");
 
   useEffect(() => {
-    fetch("/api/v1/trailer/url")
-      .then((res) => res.json())
-      .then((data) => {
-        setSearchPrefix(data.prefix);
-      });
+   fetch("/api/v1/trailer/url")
+    .then((res) => res.text())
+    .then((data) => {
+      setSearchPrefix(data);
+    });
   }, []);
 
   function openTrailer(e) {
